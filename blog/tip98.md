@@ -53,8 +53,13 @@ Since we'll be working with Azure Table Storage and I prefer to show you code th
 We'll also supply the PartitionKey to be the same every time and use a Guid for our RowKey. 
 
 ```csharp
-class Email : TableEntity
+class EmailEntity : ITableEntity
 {
+    public string PartitionKey { get; set; }
+    public string RowKey { get; set; }
+    public DateTimeOffset? Timestamp { get; set; }
+    public ETag ETag { get; set; }
+
     public string EmailAddress { get; set; }
 
     public EmailEntity(string email)
@@ -75,11 +80,9 @@ class Email : TableEntity
 I also have a helper class that we'll use to store the data, so add the following which will allow us to pass a table object and a new email instance: 
 
 ```csharp
-static void CreateMessage(CloudTable table, Email newemail)
+static void CreateMessage(TableClient table, EmailEntity newemail)
 {
-    TableOperation insert = TableOperation.Insert(newemail);
-
-    table.Execute(insert);
+    table.AddEntity(newemail);
 }
 ```
 
@@ -108,12 +111,9 @@ public static async Task<HttpResponseMessage> Run([HttpTrigger(AuthorizationLeve
     try
     {
         // the line below can be hardcoded if you aren't using AppSettings
-        CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["TableStorageConnString"]);
+        var serviceClient = new TableServiceClient(ConfigurationManager.AppSettings["TableStorageConnString"]);
 
-        CloudTableClient tableClient = storageAccount.CreateCloudTableClient();
-
-        CloudTable table = tableClient.GetTableReference("MCBlogSubscribers");
-
+        TableClient table = serviceClient.GetTableClient("MCBlogSubscribers");
         table.CreateIfNotExists();
 
         CreateMessage(table, new EmailEntity(postData["fromEmail"]));

@@ -64,10 +64,8 @@ While inside the blade for Azure Storage, look under **Settings**, then **Access
 
 Create a C# Console Application using Visual Studio, and use NuGet to pull in references to :
 
-* WindowsAzure.Storage
-* Microsoft.WindowsAzure.ConfigurationManager
+* Azure.Data.Tables
 
-<img :src="$withBase('/files/storagethroughcsharp2.png')">
 <img :src="$withBase('/files/storagethroughcsharp3.png')">
 
 Inside of your Console app, you will see **App.config**, now add the following section:
@@ -83,12 +81,10 @@ Copy the following code into your Main method:
 ```csharp
 static void Main(string[] args)
 {
-CloudStorageAccount storageAccount = CloudStorageAccount.Parse(
-                CloudConfigurationManager.GetSetting("StorageConnection"));
-CloudTableClient tableClient = storageAccount.CreateCloudTableClient();
-CloudTable table = tableClient.GetTableReference("thankfulfor");
-table.CreateIfNotExists();
-Console.ReadKey();
+    var serviceClient = new TableServiceClient(ConfigurationManager.AppSettings["StorageConnection"]);
+
+    TableClient table = serviceClient.GetTableClient("thankfulfor");
+    table.CreateIfNotExists();
 }
 ```
 
